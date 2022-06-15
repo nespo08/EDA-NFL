@@ -78,7 +78,7 @@ qbs$qb_hit <- replace(qbs$qb_hit, qbs$qb_hit == 1, "True")
 ``` {r}
 ggplot(qbs, aes(x = qb_hit, fill = complete_pass)) +
   geom_bar(position = "dodge") +
-  facet_wrap(~ passer_player_name) +
+  #facet_wrap(~ passer_player_name) +
   theme_bw() +
   labs(title = "Completed Passes by QB hits for QBs with Varying\nOffensive Line Quality", x = "QB Hit", y = "Count", fill = "Pass Completed?")
 ```
@@ -87,8 +87,7 @@ ggplot(qbs, aes(x = qb_hit, fill = complete_pass)) +
 mosaicplot(table("QB Hit" = qbs$qb_hit,
                  "Completed Pass" = qbs$complete_pass),
            main = "Relationship between QB hit and Pass Completion",
-           shade = TRUE) # Shading pearson residuals
-
+           shade = TRUE) # Shading by pearson residuals
 ```
 
 ### Data Visualizations
@@ -98,6 +97,12 @@ Three data visualizations exploring the hypotheses, at least two of which must b
 ### Clustering
 
 One clustering example
+
+```{r}
+ggplot(nfl_passing_plays, aes(x = air_yards, y = half_seconds_remaining)) +
+  geom_point()
+```
+
 
 ### Conclusions
 
