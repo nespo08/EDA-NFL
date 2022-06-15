@@ -1,0 +1,107 @@
+---
+title: "NFL EDA Project"
+author: "Michele Sezgin"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+
+### Data
+
+```{r load-data}
+nfl_passing_plays <- read_csv("nfl_passing_plays_2021.csv")
+bills <- nfl_passing_plays %>%
+  filter(posteam == "BUF")
+  
+head(nfl_passing_plays)
+```
+
+```{r}
+unique(nfl_passing_plays$pass_length)
+```
+
+### Exploratory Plots
+
+```{r}
+ggplot(nfl_passing_plays) +
+  geom_histogram(aes(x = down))
+```
+
+```{r}
+ggplot(nfl_passing_plays) +
+  geom_histogram(aes(x = play_clock))
+```
+
+```{r}
+ggplot(nfl_passing_plays) +
+  geom_point(aes(x = play_clock, y = air_yards))
+```
+
+```{r}
+ggplot(nfl_passing_plays, aes(x = pass_length, fill = as.factor(complete_pass))) +
+  geom_bar(position = "dodge")
+```
+
+
+### Explanation of Data
+
+Explanation of the data structure of the dataset
+
+### Hypotheses
+
+Three hypotheses you are interested in exploring
+
+Idea: Probability of winning the game if you're winning at halftime (across a couple teams?)
+
+-Maybe we should just focus on one team
+
+-Pass length based on down?
+
+-QB hit vs whether the pass was deep (player vs whole league?)
+--> or QB hits vs completions (best offensive: Tom Brady, middle offensive: Ryan Tannehill, worst: Joe Burrow)
+--> interceptions
+
+```{r}
+qbs <- nfl_passing_plays #%>%
+  #filter(passer_player_name %in% c("T.Brady", "R.Tannehill", "J.Burrow"))
+
+qbs$complete_pass <- replace(qbs$complete_pass, qbs$complete_pass == 0, "False")
+qbs$complete_pass <- replace(qbs$complete_pass, qbs$complete_pass == 1, "True")
+qbs$qb_hit <- replace(qbs$qb_hit, qbs$qb_hit == 0, "False")
+qbs$qb_hit <- replace(qbs$qb_hit, qbs$qb_hit == 1, "True")
+```
+
+``` {r}
+ggplot(qbs, aes(x = qb_hit, fill = complete_pass)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ passer_player_name) +
+  theme_bw() +
+  labs(title = "Completed Passes by QB hits for QBs with Varying\nOffensive Line Quality", x = "QB Hit", y = "Count", fill = "Pass Completed?")
+```
+
+```{r}
+mosaicplot(table("QB Hit" = qbs$qb_hit,
+                 "Completed Pass" = qbs$complete_pass),
+           main = "Relationship between QB hit and Pass Completion",
+           shade = TRUE) # Shading pearson residuals
+
+```
+
+### Data Visualizations
+
+Three data visualizations exploring the hypotheses, at least two of which must be multivariate. Each visualization must be in a different format from the other two, and you must have at least one categorical and one continuous visualization.
+
+### Clustering
+
+One clustering example
+
+### Conclusions
+
+Conclusions reached for the hypotheses based on your EDA and data visualizations.
+
+...
+
