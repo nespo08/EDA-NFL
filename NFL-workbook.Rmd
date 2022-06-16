@@ -80,7 +80,8 @@ ggplot(qbs, aes(x = qb_hit, fill = complete_pass)) +
   geom_bar(position = "dodge") +
   #facet_wrap(~ passer_player_name) +
   theme_bw() +
-  labs(title = "Completed Passes by QB hits for QBs with Varying\nOffensive Line Quality", x = "QB Hit", y = "Count", fill = "Pass Completed?")
+  labs(title = "Completed Passes by QB hits for QBs with Varying\nOffensive Line Quality", x = "QB Hit", y = "Count", fill = "Pass Completed?") #+
+  #scale_fill_manual(values = c("purple", "orange"))
 ```
 
 ```{r}
@@ -89,6 +90,40 @@ mosaicplot(table("QB Hit" = qbs$qb_hit,
            main = "Relationship between QB hit and Pass Completion",
            shade = TRUE) # Shading by pearson residuals
 ```
+
+This plot visualizes that these variables are independent 
+
+```{r}
+# nfl_passing_plays %>%
+#     filter(half_seconds_remaining %in% c(1800:1700), game_half == "Half1") %>%
+#     summarize(total_cp = sum(complete_pass))[[1]]
+
+pass_completions <- function(interval, half) {
+ total_cp <-  nfl_passing_plays %>%
+    filter(half_seconds_remaining %in% c(interval[1]:interval[2]), game_half == half) %>%
+    summarize(total_cp = sum(complete_pass))
+ #return(interval[1])
+  return(total_cp[[1]])
+}
+
+list_ranges <- list()
+for (i in seq(1800, 100, -100)) {
+  list_ranges <- append(list_ranges, c(i, i-100))
+}
+
+map(list(c(1800,1700), c(1699, 1600), c(1599, 1500), c(1499, 1400), c()), pass_completions, "Half1")
+
+```
+
+```{r}
+nfl_passing_plays %>%
+  mutate(TotalCompletions = sum(complete_pass)) %>%
+  filter(game_half == "Half1") %>%
+  select(TotalCompletions, game_half, half_seconds_remaining)
+  
+```
+
+
 
 ### Data Visualizations
 
@@ -99,9 +134,18 @@ Three data visualizations exploring the hypotheses, at least two of which must b
 One clustering example
 
 ```{r}
-ggplot(nfl_passing_plays, aes(x = air_yards, y = half_seconds_remaining)) +
+ggplot(nfl_passing_plays, aes(x = yards_after_catch, y = epa)) +
   geom_point()
 ```
+
+```{r}
+nfl_passing_plays %>%
+  filter(complete_pass == 1) %>%
+  ggplot(aes(x = complete_pass)) +
+  geom_histogram() +
+  facet_wrap(~game_half)
+```
+
 
 
 ### Conclusions
