@@ -8,40 +8,47 @@ output: openintro::lab_report
 ```{r load-packages, message=FALSE}
 library(tidyverse)
 library(openintro)
+library(protoclust)
+library(ggdendro)
 ```
 
 ### Data
 
 ```{r load-data}
 nfl_passing_plays <- read_csv("nfl_passing_plays_2021.csv")
-bills <- nfl_passing_plays %>%
-  filter(posteam == "BUF")
+# bills <- nfl_passing_plays %>%
+#   filter(posteam == "BUF")
   
 head(nfl_passing_plays)
 ```
 
 ```{r}
+# Checking pass_length variable values
 unique(nfl_passing_plays$pass_length)
 ```
 
 ### Exploratory Plots
 
 ```{r}
+# Looking at distribution of downs
 ggplot(nfl_passing_plays) +
   geom_histogram(aes(x = down))
 ```
 
 ```{r}
+# Looking at distribution of play clock times when ball was snapped
 ggplot(nfl_passing_plays) +
   geom_histogram(aes(x = play_clock))
 ```
 
 ```{r}
+# Looking at time when ball was snapped vs length of yards of pass
 ggplot(nfl_passing_plays) +
   geom_point(aes(x = play_clock, y = air_yards))
 ```
 
 ```{r}
+# Visualizing pass length vs whether the pass was completed
 ggplot(nfl_passing_plays, aes(x = pass_length, fill = as.factor(complete_pass))) +
   geom_bar(position = "dodge")
 ```
@@ -140,8 +147,99 @@ ggplot(nfl_passing_plays, aes(x = yards_after_catch, y = epa)) +
 
 ```{r}
 nfl_passing_plays %>%
+  filter(!is.na(air_yards)) %>%
+  group_by(posteam) %>%
+  summarise(epa = sum(epa), ay = sum(air_yards)) %>%
+  ggplot(aes(x = epa, y = ay)) +
+  geom_point()
+
+nfl_passing_plays %>%
+  filter(!is.na(air_yards)) %>%
+  group_by(passer_player_id) %>%
+  summarise(epa = sum(epa), ay = sum(air_yards)) %>%
+  ggplot(aes(x = epa, y = ay)) +
+  geom_point()
+
+nfl_passing_plays %>%
+  group_by(passer_player_id) %>%
+  summarise(yg = sum(yards_gained), epa = sum(epa)) %>%
+  mutate(std_yg = as.numeric(scale(yg)), std_epa = as.numeric(scale(epa))) %>%
+  ggplot(aes(x = std_yg, y = std_epa)) +
+  geom_point()
+
+nfl_passing_plays %>%
+  mutate(std_yg = as.numeric(scale(yards_gained)), std_epa = as.numeric(scale(epa))) %>%
+  group_by(passer_player_id) %>%
+  summarise(std_yg = sum(std_yg), std_epa = sum(std_epa)) %>%
+  ggplot(aes(x = std_yg, y = std_epa)) +
+  geom_point()
+```
+
+```{r}
+team_clust <- nfl_passing_plays %>%
+  group_by(passer_player_id) %>%
+  summarise(yg = sum(yards_gained), epa = sum(epa))
+
+team_clust_std <- team_clust %>%
+  mutate(std_yg = as.numeric(scale(yg)),
+         std_epa = as.numeric(scale(epa)))
+
+team_dist <- dist(dplyr::select(team_clust_std,
+                                  std_yg, std_epa))
+
+nfl_protoclust <- protoclust(team_dist)
+
+ggdendrogram(nfl_protoclust, labels = FALSE, leaf_labels = FALSE,
+             theme_dendro = FALSE) +
+  labs(y = "Dissimilarity between clusters") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank()) 
+```
+
+```{r}
+minimax_player_clusters <- protocut(nfl_protoclust, k = 3)
+
+team_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  ggplot(aes(x = std_yg, y = std_epa, color = player_clusters)) +
+  geom_point(alpha = 0.5) +
+  ggthemes::scale_color_colorblind() +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+nfl_prototypes <- team_clust_std %>%
+  slice(minimax_player_clusters$protos)
+
+team_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  ggplot(aes(x = std_yg, y = std_epa, color = player_clusters)) +
+  geom_point(alpha = 0.5) +
+  # geom_point(data = mutate(nba_prototypes, 
+  #                          player_clusters = as.factor(c(1, 2, 3))),
+  #            size = 5) +
+  #geom_label(data = mutate(nfl_prototypes, 
+  #                         player_clusters = as.factor(c(1, 2, 3))),
+  #           aes(label = passer_player_name)) +
+  ggthemes::scale_color_colorblind() +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+
+# table("Clusters" = minimax_player_clusters$cl,
+#       "Positions" = nba_filtered_stats$pos)
+```
+
+
+```{r}
+nfl_passing_plays %>%
   filter(complete_pass == 1) %>%
-  ggplot(aes(x = complete_pass)) +
+  select(complete_pass, )
+  ggplot(aes(x = half_seconds)) +
   geom_histogram() +
   facet_wrap(~game_half)
 ```
