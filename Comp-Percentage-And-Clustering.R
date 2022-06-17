@@ -26,71 +26,64 @@ nfl_passing_plays <- nfl_2021_data %>%
     # Description of play
     desc)
 
+# Preview data
 head(nfl_passing_plays, n = 50)
 colnames(nfl_passing_plays)
 
 nfl_passing_plays <- as_tibble(nfl_passing_plays)
 
+
+# Testing - Not Used For Hypotheses ---------------------------------------
+
 JA_passing_plays <- filter(nfl_passing_plays, passer_player_name %in% 'J.Allen')
 #tail(JA_passing_plays)
 
-# Pass yardage vs EPA
+# Air yardage vs EPA, colored by pass location
 nfl_passing_plays %>% 
   ggplot(aes(x = air_yards, y = epa, color = pass_location)) +
   geom_point(alpha = 0.75) +
   theme_bw()
 
-# Interceptions
-JA_passing_plays %>% 
-  ggplot(aes(x = epa, y = pass_location, color = interception)) +
-  geom_point(alpha = 0.75) +
-  theme_bw()
-
-# Completions
+# Air yardage vs EPA for Josh Allen, colored by completions
 JA_passing_plays %>% 
   ggplot(aes(x = air_yards, y = epa, color = complete_pass)) +
   geom_point(alpha = 0.75) +
   theme_bw()
 
-# Touchdowns - EPA
+# Air yardage vs EPA for Josh Allen, colored by touchdowns
 JA_passing_plays %>% 
   ggplot(aes(x = air_yards, y = epa, color = touchdown)) +
   geom_point(alpha = 0.75) +
   theme_bw()
 
-
-# Touchdowns - WPA - USE THIS! - What is most influential of WPA? -------
-
+# Air yardage vs WPA for Josh Allen, colored by touchdowns
 JA_passing_plays %>% 
   ggplot(aes(x = air_yards, y = wpa, color = touchdown)) +
   geom_point(alpha = 0.75) +
   scale_color_gradient(low="darkorange", high = "darkblue") +
   theme_bw()
 
+# Air yardage vs WPA for NFL, colored by interceptions
 nfl_passing_plays %>% 
   ggplot(aes(x = air_yards, y = wpa, color = interception)) +
   geom_point(alpha = 0.75) +
   theme_bw()
 
+# Total yardage vs YAC for NFL
 nfl_passing_plays %>%
   ggplot(aes(x = yards_gained, y = yards_after_catch)) +
   geom_point(alpha = 0.75) +
   theme_bw()
 
-# Display proportions on the y-axis (completion percentage) - JA
-JA_passing_plays %>%
-  ggplot(aes(x = air_yards)) +
-  geom_bar(aes(y = after_stat(count) / sum(after_stat(count)))) + # Compute comp. %
-  theme_bw()
-
-# Visualize independence with a mosaic plot -------------------------------
+# Visualize independence with a mosaic plot
 
 table("Pass Length" = JA_passing_plays$qb_hit,
       "Completion" = JA_passing_plays$interception) %>%
   mosaicplot(main = "Relationship between QB Hit and Interceptions?",
              shade = TRUE) # Shade by Pearson residuals (how far we differ from exp. independence)
 
-# Using density curves and ECDF to analyze passing yardage -----------------------------------
+
+# Hypothesis #3: At what yardage range do NFL QBs complete the most passes? Where are they the most accruate? -------------------------------------
 
 library(patchwork)
 
@@ -102,7 +95,7 @@ nfl_passing_plays$complete_pass <- replace(nfl_passing_plays$complete_pass,
                                            nfl_passing_plays$complete_pass == 1,
                                            "TRUE")
 
-# Create density curve
+# Create density curve for air yardage, colored by completions
 nfl_density_curve <- nfl_passing_plays %>%
   ggplot(aes(x=air_yards,
              color = complete_pass)) +
@@ -115,7 +108,7 @@ nfl_density_curve <- nfl_passing_plays %>%
        y = "Number of Passes") +
   theme(legend.position = "blank")
 
-# Create ECDF 
+# Create ECDF  for air yardage, colored by completions
 nfl_ecdf <- nfl_passing_plays %>%
   ggplot(aes(x=air_yards,
              color = complete_pass)) +
@@ -132,11 +125,7 @@ nfl_ecdf <- nfl_passing_plays %>%
 nfl_density_curve + nfl_ecdf + plot_layout(guides = "collect")
 
 
-# Clustering --------------------------------------------------------------
-
-# Search for clusters at the player, team levels (check iphone notes)
-
-# Group-by team/player name
+# Clustering (Testing) --------------------------------------------------------------
 
 # Group by team - yac vs ay
 nfl_passing_plays %>%
@@ -163,6 +152,9 @@ nfl_passing_plays %>%
   ggplot(aes(x=ty,y=epa)) +
   geom_point()
 
+
+# Clustering (Example) ----------------------------------------------------
+
 # Group by player - total yards vs epa (and standardization)
 nfl_passing_plays <- nfl_passing_plays %>%
   mutate(std_total_yards = as.numeric(scale(yards_gained)), 
@@ -185,7 +177,7 @@ player_clust <- nfl_passing_plays %>%
 
 player_clust_std <- player_clust %>%
   mutate(std_total_yards = as.numeric(scale(total_yards)),
-                                      std_epa = as.numeric(scale(epa))
+                                      std_epa = as.numeric(scale(epa)))
 
 player_dist <- dist(dplyr::select(nfl_passing_plays, 
                     std_total_yards, 
