@@ -167,7 +167,7 @@ nfl_passing_plays %>%
              y = std_epa)) +
   geom_point()
 
-# Minimax clustering (with standardization)
+# Minimax clustering
 library(protoclust)
 library(ggdendro)
 
