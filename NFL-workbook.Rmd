@@ -15,6 +15,7 @@ library(ggdendro)
 ### Data
 
 ```{r load-data}
+# Read in the data
 nfl_passing_plays <- read_csv("nfl_passing_plays_2021.csv")
 # bills <- nfl_passing_plays %>%
 #   filter(posteam == "BUF")
@@ -73,9 +74,12 @@ Idea: Probability of winning the game if you're winning at halftime (across a co
 --> interceptions
 
 ```{r}
+# Quarterbacks with differing line qualities
 qbs <- nfl_passing_plays #%>%
+  # commented out to show all quarterbacks:
   #filter(passer_player_name %in% c("T.Brady", "R.Tannehill", "J.Burrow"))
 
+# Replacing 1s and 0s with True and False
 qbs$complete_pass <- replace(qbs$complete_pass, qbs$complete_pass == 0, "False")
 qbs$complete_pass <- replace(qbs$complete_pass, qbs$complete_pass == 1, "True")
 qbs$qb_hit <- replace(qbs$qb_hit, qbs$qb_hit == 0, "False")
@@ -85,28 +89,33 @@ qbs$qb_hit <- replace(qbs$qb_hit, qbs$qb_hit == 1, "True")
 ``` {r}
 ggplot(qbs, aes(x = qb_hit, fill = complete_pass)) +
   geom_bar(position = "dodge") +
+  # commented out to show all quarterbacks
   #facet_wrap(~ passer_player_name) +
   theme_bw() +
-  labs(title = "Completed Passes by QB hits for QBs with Varying\nOffensive Line Quality", x = "QB Hit", y = "Count", fill = "Pass Completed?") #+
+  labs(title = "Completed Passes by QB hits", x = "QB Hit", y = "Count", fill = "Pass Completed?") #+
   #scale_fill_manual(values = c("purple", "orange"))
 ```
 
 ```{r}
+# Visualizing whether hits and completed passes are independent
 mosaicplot(table("QB Hit" = qbs$qb_hit,
                  "Completed Pass" = qbs$complete_pass),
-           main = "Relationship between QB hit and Pass Completion",
+           main = "QBs Less Likely to Complete Pass When Hit",
            shade = TRUE) # Shading by pearson residuals
 ```
 
 This plot visualizes that these variables are independent 
 
 ```{r}
+# When the group was trying to figure out how to plot complete passes by time left in the half, I was making this function:
+
 # nfl_passing_plays %>%
 #     filter(half_seconds_remaining %in% c(1800:1700), game_half == "Half1") %>%
 #     summarize(total_cp = sum(complete_pass))[[1]]
 
 pass_completions <- function(interval, half) {
- total_cp <-  nfl_passing_plays %>%
+  # return total number of hits based on time interval and half
+  total_cp <-  nfl_passing_plays %>%
     filter(half_seconds_remaining %in% c(interval[1]:interval[2]), game_half == half) %>%
     summarize(total_cp = sum(complete_pass))
  #return(interval[1])
@@ -123,6 +132,7 @@ map(list(c(1800,1700), c(1699, 1600), c(1599, 1500), c(1499, 1400), c()), pass_c
 ```
 
 ```{r}
+# Testing out Adriana's code... it does not do what we want
 nfl_passing_plays %>%
   mutate(TotalCompletions = sum(complete_pass)) %>%
   filter(game_half == "Half1") %>%
@@ -141,11 +151,13 @@ Three data visualizations exploring the hypotheses, at least two of which must b
 One clustering example
 
 ```{r}
+# Trying to find separable data for clustering... this data was not separable
 ggplot(nfl_passing_plays, aes(x = yards_after_catch, y = epa)) +
   geom_point()
 ```
 
 ```{r}
+# epa vs air yards for each passing team... data looks more separable
 nfl_passing_plays %>%
   filter(!is.na(air_yards)) %>%
   group_by(posteam) %>%
@@ -153,6 +165,7 @@ nfl_passing_plays %>%
   ggplot(aes(x = epa, y = ay)) +
   geom_point()
 
+# epa vs air yards for each passing player... data again looks more separable
 nfl_passing_plays %>%
   filter(!is.na(air_yards)) %>%
   group_by(passer_player_id) %>%
@@ -160,6 +173,7 @@ nfl_passing_plays %>%
   ggplot(aes(x = epa, y = ay)) +
   geom_point()
 
+# epa vs yards gained for each passing player, Nick's idea... data again looks more separable
 nfl_passing_plays %>%
   group_by(passer_player_id) %>%
   summarise(yg = sum(yards_gained), epa = sum(epa)) %>%
@@ -167,6 +181,7 @@ nfl_passing_plays %>%
   ggplot(aes(x = std_yg, y = std_epa)) +
   geom_point()
 
+# Testing out how data looks if standardized first. Nick and I were debating whether to # standardize before grouping and summarizing. Prof. Yurko told us to do all wrangling  # and standardize only right before clustering
 nfl_passing_plays %>%
   mutate(std_yg = as.numeric(scale(yards_gained)), std_epa = as.numeric(scale(epa))) %>%
   group_by(passer_player_id) %>%
@@ -176,6 +191,7 @@ nfl_passing_plays %>%
 ```
 
 ```{r}
+# Minimax clustering of total epa vs yards gained for each player so we can have one    # representative player per cluster 
 team_clust <- nfl_passing_plays %>%
   group_by(passer_player_id) %>%
   summarise(yg = sum(yards_gained), epa = sum(epa))
@@ -200,6 +216,7 @@ ggdendrogram(nfl_protoclust, labels = FALSE, leaf_labels = FALSE,
 ```
 
 ```{r}
+# More minimax clustering and visualizing process
 minimax_player_clusters <- protocut(nfl_protoclust, k = 3)
 
 team_clust_std %>%
@@ -236,6 +253,7 @@ team_clust_std %>%
 
 
 ```{r}
+# Again trying to get complete passes by time left in the half... unsuccessfully
 nfl_passing_plays %>%
   filter(complete_pass == 1) %>%
   select(complete_pass, )
