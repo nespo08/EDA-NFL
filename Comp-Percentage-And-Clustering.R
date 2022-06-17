@@ -155,15 +155,16 @@ nfl_passing_plays %>%
 
 # Clustering (Example) ----------------------------------------------------
 
-# Group by player - total yards vs epa (and standardization)
-nfl_passing_plays <- nfl_passing_plays %>%
-  mutate(std_total_yards = as.numeric(scale(yards_gained)), 
-         std_epa = as.numeric(scale(epa)))
+# IMPORTANT: NEED TO REMOVE PLAYERS WITH MINIMAL PASS ATTEMPTS!
 
-nfl_passing_plays %>%
+# Group by player - total yards vs epa (with standardization)
+nfl_passing_plays %>% 
   group_by(passer_player_name) %>%
-  summarize(std_ty = sum(std_total_yards), std_epa = sum(std_epa)) %>%
-  ggplot(aes(x=std_ty,y=std_epa)) +
+  summarize(total_yards = sum(yards_gained), epa = sum(epa)) %>%
+  mutate(std_total_yards = as.numeric(scale(total_yards)), 
+         std_epa = as.numeric(scale(epa))) %>%
+  ggplot(aes(x = std_total_yards,
+             y = std_epa)) +
   geom_point()
 
 # Minimax clustering (with standardization)
@@ -173,27 +174,56 @@ library(ggdendro)
 # Compute the distance (euclidean)
 player_clust <- nfl_passing_plays %>%
   group_by(passer_player_name) %>%
-  summarize(total_yards = sum(yards_gained), epa = sum(pa))
+  summarize(total_yards = sum(yards_gained), epa = sum(epa))
 
 player_clust_std <- player_clust %>%
   mutate(std_total_yards = as.numeric(scale(total_yards)),
                                       std_epa = as.numeric(scale(epa)))
 
-player_dist <- dist(dplyr::select(nfl_passing_plays, 
+player_dist <- dist(dplyr::select(player_clust_std, 
                     std_total_yards, 
                     std_epa))
 
-nfl_minimax <- protoclust(player_dist)
+nfl_protoclust <- protoclust(player_dist)
 
-# Plot clustering
-minimax_player_clusters <- 
-  protocut(nfl_minimax, k = 3)
-nfl_playing_plays %>%
+# Plot dendrogram
+ggdendrogram(nfl_protoclust, 
+             labels = FALSE,
+             leaf_labels = FALSE,
+             theme_dendro = FALSE) +
+  labs(y = "Dissimilarity between clusters") +
+  theme_bw() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank())
+
+# Minimax clustering
+minimax_player_clusters <- protocut(nfl_protoclust, k = 4)
+
+player_clust_std %>%
   mutate(player_clusters = 
            as.factor(minimax_player_clusters$cl)) %>%
   ggplot(aes(x = std_total_yards, y = std_epa,
              color = player_clusters)) +
   geom_point(alpha = 0.5) + 
+  ggthemes::scale_color_colorblind() +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# Clustering with prototypes
+nfl_prototypes <- player_clust_std %>%
+  slice(minimax_player_clusters$protos)
+
+player_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  ggplot(aes(x = std_total_yards,
+             y = std_epa, color = player_clusters)) +
+  geom_point(data = mutate(nfl_prototypes,
+                           player_clusters = as.factor(c(1,2,3,4))),
+             size = 5)  +
+  geom_point(alpha = 0.5) +
   ggthemes::scale_color_colorblind() +
   theme_bw() +
   theme(legend.position = "bottom")
