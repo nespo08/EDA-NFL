@@ -199,7 +199,7 @@ ggdendrogram(nfl_protoclust,
         panel.grid = element_blank())
 
 # Minimax clustering
-minimax_player_clusters <- protocut(nfl_protoclust, k = 4)
+minimax_player_clusters <- protocut(nfl_protoclust, k = 5)
 
 player_clust_std %>%
   mutate(player_clusters = 
@@ -221,7 +221,7 @@ player_clust_std %>%
   ggplot(aes(x = std_total_yards,
              y = std_epa, color = player_clusters)) +
   geom_point(data = mutate(nfl_prototypes,
-                           player_clusters = as.factor(c(1,2,3,4))),
+                           player_clusters = as.factor(c(1,2,3,4,5))),
              size = 5)  +
   geom_point(alpha = 0.5) +
   ggthemes::scale_color_colorblind() +
