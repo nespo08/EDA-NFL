@@ -157,16 +157,6 @@ nfl_passing_plays %>%
 
 # IMPORTANT: NEED TO REMOVE PLAYERS WITH MINIMAL PASS ATTEMPTS!
 
-# Group by player - total yards vs epa (with standardization)
-nfl_passing_plays %>% 
-  group_by(passer_player_name) %>%
-  summarize(total_yards = sum(yards_gained), epa = sum(epa)) %>%
-  mutate(std_total_yards = as.numeric(scale(total_yards)), 
-         std_epa = as.numeric(scale(epa))) %>%
-  ggplot(aes(x = std_total_yards,
-             y = std_epa)) +
-  geom_point()
-
 # Minimax clustering
 library(protoclust)
 library(ggdendro)
@@ -175,6 +165,9 @@ library(ggdendro)
 player_clust <- nfl_passing_plays %>%
   group_by(passer_player_name) %>%
   summarize(total_yards = sum(yards_gained), epa = sum(epa))
+
+player_clust <- player_clust %>%
+  filter(total_yards > 500) # Remove players with less than 500 total yds
 
 player_clust_std <- player_clust %>%
   mutate(std_total_yards = as.numeric(scale(total_yards)),
@@ -199,7 +192,7 @@ ggdendrogram(nfl_protoclust,
         panel.grid = element_blank())
 
 # Minimax clustering
-minimax_player_clusters <- protocut(nfl_protoclust, k = 5)
+minimax_player_clusters <- protocut(nfl_protoclust, k = 4)
 
 player_clust_std %>%
   mutate(player_clusters = 
@@ -213,6 +206,8 @@ player_clust_std %>%
 
 # Clustering with prototypes
 nfl_prototypes <- player_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
   slice(minimax_player_clusters$protos)
 
 player_clust_std %>%
@@ -221,9 +216,16 @@ player_clust_std %>%
   ggplot(aes(x = std_total_yards,
              y = std_epa, color = player_clusters)) +
   geom_point(data = mutate(nfl_prototypes,
-                           player_clusters = as.factor(c(1,2,3,4,5))),
-             size = 5)  +
+                           player_clusters = as.factor(c(1,2,3,4))),
+             size = 4) +
   geom_point(alpha = 0.5) +
+  geom_label(data = nfl_prototypes, 
+             aes(label = passer_player_name), 
+             size = 4) +
   ggthemes::scale_color_colorblind() +
   theme_bw() +
   theme(legend.position = "bottom")
+
+# Create a table of the cluster statistics
+table("Clusters" = minimax_player_clusters$cl,
+      "Names" = player_clust_std$passer_player_name)
