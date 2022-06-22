@@ -223,6 +223,9 @@ player_clust_std %>%
              aes(label = passer_player_name), 
              size = 4) +
   ggthemes::scale_color_colorblind() +
+  labs(x = "Total Yards (Standardized)",
+       y = "EPA (Standardized)") +
+  guides(color = FALSE) +
   theme_bw() +
   theme(legend.position = "bottom")
 
