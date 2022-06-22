@@ -125,7 +125,7 @@ nfl_ecdf <- nfl_passing_plays %>%
 nfl_density_curve + nfl_ecdf + plot_layout(guides = "collect")
 
 
-# Clustering (Testing) --------------------------------------------------------------
+# Clustering (Not Used for Presentation) --------------------------------------------------------------
 
 # Group by team - yac vs ay
 nfl_passing_plays %>%
@@ -154,8 +154,6 @@ nfl_passing_plays %>%
 
 
 # Clustering (Example) ----------------------------------------------------
-
-# IMPORTANT: NEED TO REMOVE PLAYERS WITH MINIMAL PASS ATTEMPTS!
 
 # Minimax clustering
 library(protoclust)
