@@ -107,6 +107,13 @@ mosaicplot(table("QB Hit" = qbs$qb_hit,
 This plot visualizes that these variables are independent 
 
 ```{r}
+ggplot(qbs) +
+  geom_bar(aes(x = pass_location, fill = complete_pass), position = "dodge") +
+  geom_errorbar()
+```
+
+
+```{r}
 # When the group was trying to figure out how to plot complete passes by time left in the half, I was making this function:
 
 # nfl_passing_plays %>%

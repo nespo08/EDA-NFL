@@ -1,0 +1,306 @@
+---
+title: "Exploratory Data Analysis for 2021 NFL Passing Plays Data"
+author: 
+  - "Nick Esposito"
+  - "Adriana Gonzalez Sanchez"
+  - "Michele Sezgin"
+date: 'June 24th, 2022'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  cache = FALSE,
+  echo = FALSE,
+  message = FALSE, 
+  warning = FALSE,
+  hiline = TRUE
+)
+```
+
+
+```{r, include = FALSE}
+# Load libraries
+library(tidyverse)
+library(patchwork)
+library(protoclust)
+library(ggdendro)
+
+# Load data
+nfl_passing_plays <- read_csv("nfl_passing_plays_2021.csv")
+
+# Copy data for T/F dataset
+nfl_cp_tf <- nfl_passing_plays
+
+# Convert 0s and 1s to TRUE/FALSE
+nfl_cp_tf$complete_pass <- replace(nfl_cp_tf$complete_pass, 
+                                           nfl_cp_tf$complete_pass == 0, 
+                                           "FALSE")
+nfl_cp_tf$complete_pass <- replace(nfl_cp_tf$complete_pass, 
+                                           nfl_cp_tf$complete_pass == 1,
+                                           "TRUE")
+nfl_cp_tf$qb_hit <- replace(nfl_cp_tf$qb_hit, nfl_cp_tf$qb_hit == 0, "False")
+nfl_cp_tf$qb_hit <- replace(nfl_cp_tf$qb_hit, nfl_cp_tf$qb_hit == 1, "True")
+```
+
+## Motivation
+
+--
+
+- Learn more about trends in football data
+
+<br>
+
+--
+
+- Explore variables that affect pass completions
+
+<br>
+
+--
+
+- Uncover similar groups/clusters of quarterbacks
+
+```{r, out.width = "200px", fig.align='right'}
+knitr::include_graphics("./EDA-NFL-Presentation_files/images/nfl-logo.svg.png")
+```
+
+---
+name: colors
+
+## NFL 2021 Passing Plays Dataset
+
+Downloaded dataset from `nflfastr` package
+
+.pull-left[
+
+- **19997** observations (passing plays), **36** variables
+
+- All passing plays from 2021 season
+
+- categorical variables: qb hit, pass completions, game half
+
+- continuous variables: air yards, EPA, half seconds remaining
+
+]
+
+.pull-right[
+
+- Data relating to:
+  - passer
+  - receiver
+  - teams
+  - time
+  - position + length of pass
+  - epa, wpa
+
+]
+
+```{r, echo = FALSE}
+knitr::kable(head(nfl_passing_plays %>%
+                    select(passer_player_name, posteam, complete_pass, air_yards, half_seconds_remaining, qb_hit, epa), 4), 
+            col.names = c("Player Name", 
+                          "Team", 
+                          "Completion", 
+                          "Air Yards",
+                          "Half Seconds Rem.",
+                          "QB Hit",
+                          "EPA"),format = 'html')
+```
+
+
+---
+
+## The Importance of the Offensive Line: QBs are Less Likely to Complete Pass When Hit
+
+```{r, fig.height = 4.5}
+# Visualizing whether hits and completed passes are independent
+par(mar = c(5, 4, 0, 1))
+mosaicplot(table("QB Hit" = nfl_cp_tf$qb_hit,
+                 "Completed Pass" = nfl_cp_tf$complete_pass),
+           main = "",
+           shade = TRUE) # Shading by pearson residuals
+```
+
+---
+
+### How do pass completions vary as a team gets closer to halftime/the end of the game?
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+nfl_passing_plays %>%
+  filter(complete_pass == "1") %>%
+  select(game_half, half_seconds_remaining, complete_pass) %>%
+  ggplot(aes(x=half_seconds_remaining)) +
+  geom_histogram(center = 1700, binwidth = 200, fill = "purple") +
+  scale_x_reverse(breaks = seq(1800, 0, by = -200)) +
+  geom_vline(xintercept = 900) +
+  labs(x = "Seconds Remaining", y = "Complete Passes") +
+  theme_bw() +
+  facet_wrap(game_half ~., ncol = 2)
+```
+
+---
+
+## At what yardage range do NFL QBs complete the most passes? Where are they the most accurate?
+
+```{r, echo = FALSE}
+# Create density curve for air yardage, colored by completions
+nfl_density_curve <- nfl_cp_tf %>%
+  ggplot(aes(x=air_yards,
+             color = complete_pass)) +
+  geom_density() +
+  geom_rug(alpha = 0.25) +
+  scale_color_manual(values=c("FALSE"="red",
+                              "TRUE"="blue")) +
+  theme_bw() +
+  labs(x = "Pass Distance (in Yards)",
+       y = "Number of Passes") +
+  theme(legend.position = "blank")
+
+# Create ECDF  for air yardage, colored by completions
+nfl_ecdf <- nfl_cp_tf %>%
+  ggplot(aes(x=air_yards,
+             color = complete_pass)) +
+  geom_rug(alpha = 0.25) +
+  stat_ecdf() +
+  scale_color_manual(values=c("FALSE"="red",
+                              "TRUE"="blue")) +
+  theme_bw() +
+  labs(x = "Pass Distance (in Yards)",
+       y = "Proportion of Passes",
+       color = "Pass Completed")
+
+# Combine plots
+nfl_density_curve + nfl_ecdf + plot_layout(guides = "collect")
+```
+
+---
+
+## Minimax Clustering by Total EPA and Total Yards Gained Per Player
+
+```{r, include = FALSE}
+# Minimax clustering
+
+# Compute the distance (euclidean)
+player_clust <- nfl_passing_plays %>%
+  group_by(passer_player_name) %>%
+  summarize(total_yards = sum(yards_gained), epa = sum(epa))
+
+player_clust <- player_clust %>%
+  filter(total_yards > 500) # Remove players with less than 500 total yds
+
+player_clust_std <- player_clust %>%
+  mutate(std_total_yards = as.numeric(scale(total_yards)),
+                                      std_epa = as.numeric(scale(epa)))
+
+player_dist <- dist(dplyr::select(player_clust_std, 
+                    std_total_yards, 
+                    std_epa))
+
+nfl_protoclust <- protoclust(player_dist)
+
+# Minimax clustering
+minimax_player_clusters <- protocut(nfl_protoclust, k = 4)
+
+player_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  ggplot(aes(x = std_total_yards, y = std_epa,
+             color = player_clusters)) +
+  geom_point(alpha = 0.5) + 
+  ggthemes::scale_color_colorblind() +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+# Clustering with prototypes
+nfl_prototypes <- player_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  slice(minimax_player_clusters$protos)
+```
+
+```{r, echo = FALSE, fig.height=4}
+player_clust_std %>%
+  mutate(player_clusters = 
+           as.factor(minimax_player_clusters$cl)) %>%
+  ggplot(aes(x = std_total_yards,
+             y = std_epa, color = player_clusters)) +
+  geom_point(data = mutate(nfl_prototypes,
+                           player_clusters = as.factor(c(1,2,3,4))),
+             size = 4) +
+  geom_point(alpha = 0.5) +
+  geom_label(data = nfl_prototypes, 
+             aes(label = passer_player_name), 
+             size = 4,
+             show.legend = FALSE) +
+  ggthemes::scale_color_colorblind() +
+  labs(x = "Total Yards (Standardized)",
+       y = "EPA (Standardized)",
+       color = "QB Clusters") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+---
+
+## Conclusions
+
+--
+
+- Investing in the offensive line pays off, as QBs less likely to complete passes when hit.
+
+--
+
+- There is a higher proportion of passes completed at the end of each half relative to the rest of the game.
+
+--
+
+- Most passes are around 5-10 yards in the air, and these passes are most accurate.
+
+--
+
+- Players can be grouped by total yards and expected points added in a way that reflects quarterback performance across the league.
+
+--
+
+## Limitations
+
+--
+
+- No positional data, which prevents location-based data analysis (such as passing heat maps).
+
+--
+
+- No ball tracking data, which can be used to further analyze QB performance.
+
+--
+
+- Data is limited to the 2021 season, and only includes the regular season.
+
+---
+
+## Appendix
+
+- https://en.wikipedia.org/wiki/National_Football_League#/media/File:National_Football_League_logo.svg
+
+- Yurko, R. (2022). *EDA Project: NFL data.* https://www.stat.cmu.edu/cmsac/sure/2022/materials/sportslabs/demos/0613-EDA-Project-NFL.html
+
+---
+
+## Appendix continued
+
+```{r}
+colnames(nfl_passing_plays)
+```
+
