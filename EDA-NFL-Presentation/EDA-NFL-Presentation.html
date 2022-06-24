@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Exploratory Data Analysis for 2021 NFL Passing Plays Data</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Nick Esposito" />
+    <meta name="author" content="Adriana Gonzalez Sanchez" />
+    <meta name="author" content="Michele Sezgin" />
+    <script src="EDA-NFL-Presentation_files/header-attrs/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Exploratory Data Analysis for 2021 NFL Passing Plays Data
+]
+.author[
+### Nick Esposito
+]
+.author[
+### Adriana Gonzalez Sanchez
+]
+.author[
+### Michele Sezgin
+]
+.date[
+### June 24th, 2022
+]
+
+---
+
+
+
+
+
+
+
+## Motivation
+
+--
+
+- Learn more about trends in football data
+
+&lt;br&gt;
+
+--
+
+- Explore variables that affect pass completions
+
+&lt;br&gt;
+
+--
+
+- Uncover similar groups/clusters of quarterbacks
+
+&lt;img src="./EDA-NFL-Presentation_files/images/nfl-logo.svg.png" width="200px" style="display: block; margin: auto 0 auto auto;" /&gt;
+
+---
+name: colors
+
+## NFL 2021 Passing Plays Dataset
+
+Downloaded dataset from `nflfastr` package
+
+.pull-left[
+
+- **19997** observations (passing plays), **36** variables
+
+- All passing plays from 2021 season
+
+- categorical variables: qb hit, pass completions, game half
+
+- continuous variables: air yards, EPA, half seconds remaining
+
+]
+
+.pull-right[
+
+- Data relating to:
+  - passer
+  - receiver
+  - teams
+  - time
+  - position + length of pass
+  - epa, wpa
+
+]
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Player Name &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Team &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Completion &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Air Yards &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Half Seconds Rem. &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; QB Hit &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; EPA &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; R.Tannehill &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TEN &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1763 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.0324124 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; R.Tannehill &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TEN &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 10 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1722 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -1.5328977 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; K.Murray &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ARI &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 29 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1707 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2.6928902 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; K.Murray &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; ARI &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -4 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1646 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; -0.5110900 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+---
+
+## The Importance of the Offensive Line: QBs are Less Likely to Complete Pass When Hit
+
+&lt;img src="EDA-NFL-Presentation_files/figure-html/unnamed-chunk-4-1.png" width="100%" /&gt;
+
+---
+
+### How do pass completions vary as a team gets closer to halftime/the end of the game?
+
+&lt;img src="EDA-NFL-Presentation_files/figure-html/unnamed-chunk-5-1.png" width="100%" /&gt;
+
+---
+
+## At what yardage range do NFL QBs complete the most passes? Where are they the most accurate?
+
+&lt;img src="EDA-NFL-Presentation_files/figure-html/unnamed-chunk-6-1.png" width="100%" /&gt;
+
+---
+
+## Minimax Clustering by Total EPA and Total Yards Gained Per Player
+
+
+
+&lt;img src="EDA-NFL-Presentation_files/figure-html/unnamed-chunk-8-1.png" width="100%" /&gt;
+
+---
+
+## Conclusions
+
+--
+
+- Investing in the offensive line pays off, as QBs less likely to complete passes when hit.
+
+--
+
+- There is a higher proportion of passes completed at the end of each half relative to the rest of the game.
+
+--
+
+- Most passes are around 5-10 yards in the air, and these passes are most accurate.
+
+--
+
+- Players can be grouped by total yards and expected points added in a way that reflects quarterback performance across the league.
+
+--
+
+## Limitations
+
+--
+
+- No positional data, which prevents location-based data analysis (such as passing heat maps).
+
+--
+
+- No ball tracking data, which can be used to further analyze QB performance.
+
+--
+
+- Data is limited to the 2021 season, and only includes the regular season.
+
+---
+
+## Appendix
+
+- https://en.wikipedia.org/wiki/National_Football_League#/media/File:National_Football_League_logo.svg
+
+- Yurko, R. (2022). *EDA Project: NFL data.* https://www.stat.cmu.edu/cmsac/sure/2022/materials/sportslabs/demos/0613-EDA-Project-NFL.html
+
+---
+
+## Appendix continued
+
+
+```
+##  [1] "passer_player_name"     "passer_player_id"       "posteam"               
+##  [4] "complete_pass"          "interception"           "yards_gained"          
+##  [7] "touchdown"              "pass_location"          "pass_length"           
+## [10] "air_yards"              "yards_after_catch"      "epa"                   
+## [13] "wpa"                    "shotgun"                "no_huddle"             
+## [16] "qb_dropback"            "qb_hit"                 "sack"                  
+## [19] "receiver_player_name"   "receiver_player_id"     "defteam"               
+## [22] "posteam_type"           "play_id"                "yardline_100"          
+## [25] "side_of_field"          "down"                   "qtr"                   
+## [28] "play_clock"             "half_seconds_remaining" "game_half"             
+## [31] "game_id"                "home_team"              "away_team"             
+## [34] "home_score"             "away_score"             "desc"
+```
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"slideNumberFormat": "%current%",
+"highlightStyle": "github",
+"highlightLines": true,
+"ratio": "16:9",
+"countIncrementalSlides": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
