@@ -221,14 +221,16 @@ player_clust_std %>%
   geom_point(alpha = 0.5) +
   geom_label(data = nfl_prototypes, 
              aes(label = passer_player_name), 
-             size = 4) +
+             size = 4,
+             show.legend = FALSE) +
   ggthemes::scale_color_colorblind() +
   labs(x = "Total Yards (Standardized)",
-       y = "EPA (Standardized)") +
-  guides(color = FALSE) +
+       y = "EPA (Standardized)",
+       color = "QB Clusters") +
   theme_bw() +
   theme(legend.position = "bottom")
 
 # Create a table of the cluster statistics
-table("Clusters" = minimax_player_clusters$cl,
-      "Names" = player_clust_std$passer_player_name)
+qb_table <- as.tibble(data.frame("Clusters" = minimax_player_clusters$cl,
+      "Names" = player_clust_std$passer_player_name) %>%
+  arrange(minimax_player_clusters$cl))
