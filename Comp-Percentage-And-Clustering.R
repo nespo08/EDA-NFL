@@ -231,6 +231,6 @@ player_clust_std %>%
   theme(legend.position = "bottom")
 
 # Create a table of the cluster statistics
-qb_table <- as.tibble(data.frame("Clusters" = minimax_player_clusters$cl,
+data.frame("Clusters" = minimax_player_clusters$cl,
       "Names" = player_clust_std$passer_player_name) %>%
-  arrange(minimax_player_clusters$cl))
+  arrange(minimax_player_clusters$cl)
